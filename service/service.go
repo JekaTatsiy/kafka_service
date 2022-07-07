@@ -196,7 +196,6 @@ func Wait(s *serv.Serv) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println(int64(uint64(0) + 1))
 		reader := kafka.NewReader(kafka.ReaderConfig{
 			Brokers:   []string{conn.Broker().Host},
 			Topic:     s.ToTopicName(login),

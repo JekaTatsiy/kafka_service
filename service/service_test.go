@@ -33,8 +33,8 @@ var _ = Describe("Search", func() {
 
 	var s *server.Serv
 	var e error
-	const wait = 5
-	for range [wait]int8{} {
+	const waitTime = 5
+	for range [waitTime]int8{} {
 		s, e = server.NewServ(2000, *kafkaAddr)
 		if e == nil {
 			break
@@ -47,6 +47,7 @@ var _ = Describe("Search", func() {
 	add := repo.Add(s)
 	last := repo.Last(s)
 	hist := repo.Hist(s)
+	wait := repo.Wait(s)
 
 	Context("Public functions", func() {
 		When("add", func() {
@@ -204,6 +205,42 @@ var _ = Describe("Search", func() {
 
 				Expect(len(w.Body.String())).Should(Equal(0))
 
+			})
+		})
+		When("wait", func() {
+			It("Success", func() {
+				login := "userlogin6"
+				defer func() {
+					conn, e := s.NewSimpleConn()
+					Expect(e).ShouldNot(HaveOccurred())
+					conn.DeleteTopics(s.ToTopicName(login))
+				}()
+
+				t := time.Time{}
+
+				go func() {
+					time.Sleep(time.Second)
+					r := httptest.NewRequest(http.MethodGet, "/wait", nil)
+					r.Header.Set("Content-Type", "multipart/form-data")
+					r.Form = url.Values{"login": []string{login}}
+					w := httptest.NewRecorder()
+					add(w, r)
+					var e error
+					t, e = time.Parse("2006-01-02 15:04:05", w.Body.String())
+					Expect(e).ShouldNot(HaveOccurred())
+				}()
+
+				r := httptest.NewRequest(http.MethodGet, "/wait", nil)
+				r.Header.Set("Content-Type", "multipart/form-data")
+				r.Form = url.Values{"login": []string{login}}
+				w := httptest.NewRecorder()
+
+				wait(w, r)
+
+				parts := strings.Split(w.Body.String(), ": ")
+				tget, e := time.Parse("2006-01-02 15:04:05", strings.ReplaceAll(parts[1], "\n", ""))
+				Expect(e).ShouldNot(HaveOccurred())
+				Expect(t).Should(Equal(tget))
 			})
 		})
 	})
