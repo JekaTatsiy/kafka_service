@@ -3,7 +3,7 @@ version: "3"
 services:
   kafka:
     container_name: kafka-s
-    image: 'bitnami/kafka:latest'
+    image: "bitnami/kafka:latest"
     ports:
       - 9092:9092
     environment:
@@ -17,8 +17,8 @@ services:
     depends_on:
       - zookeeper
   zookeeper:
-    image: 'bitnami/zookeeper:latest'
+    image: "bitnami/zookeeper:latest"
     ports:
-      - :2181
+      - 2181
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
