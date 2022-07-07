@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"time"
 
@@ -8,21 +9,22 @@ import (
 	service "github.com/JekaTatsiy/kafka_service/service"
 )
 
+var kafkaAddr = flag.String("s", "0.0.0.0:9092", "adres kafka service")
+
 func main() {
 	port := 2000
-	kafkaAddr := "kafka-s:9092"
-	fmt.Println(kafkaAddr)
+	fmt.Println(*kafkaAddr)
 
 	var s *server.Serv
 	var e error
 
-	const wait = 10
+	const wait = 1000
 	for i := range [wait]int8{} {
-		s, e = server.NewServ(port, kafkaAddr)
+		s, e = server.NewServ(port, *kafkaAddr)
 		if e == nil {
 			break
 		}
-		fmt.Printf("connection error! wait:%d/%dsec\n", i+1, wait)
+		fmt.Printf("connection error! wait:%d/%dsec. err msg:%s\n", i+1, wait,e.Error())
 		time.Sleep(time.Second)
 	}
 	if e != nil {

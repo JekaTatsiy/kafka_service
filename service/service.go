@@ -174,8 +174,52 @@ func Hist(s *serv.Serv) http.HandlerFunc {
 	}
 }
 
+func Wait(s *serv.Serv) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/plain")
+
+		login := r.FormValue("login")
+		if login == "" {
+			w.Write([]byte("error: " + errors.New("form value \"login\" not found").Error()))
+			return
+		}
+
+		conn, e := s.NewConn(login)
+		if e != nil {
+			w.Write([]byte("error: " + e.Error()))
+			return
+		}
+
+		_, off, e := conn.ReadOffsets()
+		if e != nil {
+			w.Write([]byte("error: " + e.Error()))
+			return
+		}
+
+		fmt.Println(int64(uint64(0) + 1))
+		reader := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:   []string{conn.Broker().Host},
+			Topic:     s.ToTopicName(login),
+			Partition: 0,
+			MinBytes:  0,
+			MaxBytes:  10e6,
+			MaxWait:   time.Minute,
+		})
+			reader.SetOffset(off)
+			
+			m, e := reader.ReadMessage(context.Background())
+			if e != nil {
+				w.Write([]byte("error: " + e.Error()))
+				return
+			}
+
+			w.Write([]byte(fmt.Sprintf("%-3d: %s\n", m.Offset, ToFormatedTime(m.Value))))
+		}
+}
+
 func GenRoute(s *serv.Serv) {
 	s.Router.HandleFunc("/login", Add(s)).Methods(http.MethodPost)
 	s.Router.HandleFunc("/last", Last(s)).Methods(http.MethodGet)
 	s.Router.HandleFunc("/hist", Hist(s)).Methods(http.MethodGet)
+	s.Router.HandleFunc("/wait", Wait(s)).Methods(http.MethodGet)
 }

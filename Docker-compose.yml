@@ -4,12 +4,11 @@ services:
   service:
     container_name: kafka-service
     build: .
-    command: /main
+    command: /main -s kafka-s:9092
     ports:
       - 2000:2000
     depends_on:
       - kafka
-    network_mode: bridge
   kafka:
     container_name: kafka-s
     image: 'bitnami/kafka:latest'
@@ -29,4 +28,4 @@ services:
       - :2181
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    network_mode: bridge
+
